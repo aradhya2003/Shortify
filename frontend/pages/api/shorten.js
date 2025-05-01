@@ -12,7 +12,9 @@ export default async function handler(req, res) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ 
-          long_url: req.body.longUrl  // Ensure this matches your frontend state
+          long_url: req.body.longUrl , // Ensure this matches your frontend state
+          custom_alias: req.body.customAlias  // Include this if you're using custom aliases
+
         })
       }
     );

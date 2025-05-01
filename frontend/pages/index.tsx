@@ -29,7 +29,10 @@ export default function Home() {
       const response = await fetch('/api/shorten', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ longUrl: url, customAlias }),
+        body: JSON.stringify({
+          longUrl: url,
+  customAlias: customAlias,
+        }), 
       });
 
       const data = await response.json();
@@ -137,7 +140,7 @@ export default function Home() {
                   onChange={(e) => setCustomAlias(e.target.value)}
                   placeholder="your-brand"
                   pattern="[a-zA-Z0-9-]+"
-                  title="Only letters, numbers and hyphens"
+                  title="Only letters, numbers, and hyphens"
                 />
               </div>
             </div>
