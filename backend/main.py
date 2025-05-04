@@ -1,11 +1,19 @@
 import os
-from fastapi import FastAPI, HTTPException, Body
+from fastapi import FastAPI, HTTPException, Body, Request,  BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from supabase import create_client
 import secrets
 import redis
 from dotenv import load_dotenv
-
+import geoip2.database
+import traceback
+from user_agents.parsers import parse
+from datetime import datetime, timezone 
+from datetime import datetime
+from pathlib import Path
+geoip_path = Path("data") / "GeoLite2-City_20250502" / "GeoLite2-City.mmdb"
+geoip_reader = geoip2.database.Reader(str(geoip_path))
+from pathlib import Path
 load_dotenv()
 
 app = FastAPI()
@@ -59,9 +67,12 @@ async def shorten_url(url_item: dict = Body(...)):
         "short_url": f"http://localhost:3000/{short_code}",
         "code": short_code
     }
-
 @app.get("/{short_code}")
-async def redirect_url(short_code: str):
+async def redirect_url(
+    short_code: str,
+    request: Request,  # Add this parameter
+    background_tasks: BackgroundTasks
+):
     """Redirect to original URL"""
     if cached := redis_client.get(short_code):
         return {"long_url": cached.decode()}
@@ -73,9 +84,92 @@ async def redirect_url(short_code: str):
 
     if not res.data:
         raise HTTPException(status_code=404, detail="URL not found")
+    background_tasks.add_task(track_analytics, short_code, request)
 
-    return {"long_url": res.data[0]["long_url"]}
+    return {"long_url": res.data[0]["long_url"]}    
+    
+    
+@app.get("/api/analytics/{short_code}")
+async def get_analytics(short_code: str):
+    """Fetch analytics summary via Supabase stored procedure"""
+    try:
+        # First verify the short code exists
+        url_res = supabase.table("urls") \
+            .select("id") \
+            .eq("short_code", short_code) \
+            .execute()
+        
+        if not url_res.data:
+            raise HTTPException(status_code=404, detail="URL not found")
 
+        # Call the PostgreSQL function
+        result = supabase.rpc(
+            "get_url_analytics",
+            {"short_code_param": short_code}
+        ).execute()
+
+        # Debug logging
+        print(f"Raw RPC response: {result}")
+
+        # The data is returned directly in the response, not nested
+        if not result.data:
+            return {
+                "total_clicks": 0,
+                "unique_visitors": 0,
+                "top_country": None,
+                "referrers": [],
+                "locations": []
+            }
+
+        # Return the data directly (it's not nested under 'get_url_analytics' in Python client)
+        return result.data
+
+    except Exception as e:
+        print(f"Detailed error: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to fetch analytics: {str(e)}"
+        )
+async def track_analytics(short_code: str, request: Request):
+    """Background analytics tracking"""
+    try:
+        client_host = request.client.host
+        user_agent_str = request.headers.get("user-agent", "")
+        referer = request.headers.get("referer", "")
+        
+        # Parse user agent
+        user_agent = parse(user_agent_str)
+        device_type = (
+            "mobile" if user_agent.is_mobile else
+            "desktop" if user_agent.is_pc else
+            "tablet" if user_agent.is_tablet else 
+            "other"
+        )
+
+        # Get location data
+        country = city = None
+        try:
+            if client_host and client_host not in ["127.0.0.1", "::1", "localhost"]:
+                geo_data = geoip_reader.city(client_host)
+                country = geo_data.country.name if geo_data.country.name else None
+                city = geo_data.city.name if geo_data.city.name else None
+        except Exception as geo_error:
+            print(f"GeoIP lookup failed: {geo_error}")
+
+        # Insert analytics
+        supabase.table("clicks").insert({
+            "short_code": short_code,
+            "ip_address": client_host,
+            "country": country,
+            "city": city,
+            "device_type": device_type,
+            "referrer": referer,
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }).execute()
+
+    except Exception as e:
+        print("Analytics tracking failed (non-critical):", repr(e))
+        traceback.print_exc()
 @app.get("/")
 async def health_check():
     return {"status": "OK"}
