@@ -25,7 +25,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
+PROD_DOMAIN = os.getenv("PROD_DOMAIN", "http://localhost:8000")
 # Initialize clients
 supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
 redis_client = redis.from_url(os.getenv("REDIS_URL"))
