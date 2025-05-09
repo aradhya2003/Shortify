@@ -64,8 +64,8 @@ async def shorten_url(url_item: dict = Body(...)):
     redis_client.setex(short_code, 86400, long_url)
 
     return {
-        "short_url": f"http://localhost:3000/{short_code}",
-        "code": short_code
+    "short_url": f"{os.getenv('PROD_DOMAIN')}/{short_code}",
+    "code": short_code
     }
 @app.get("/{short_code}")
 async def redirect_url(
