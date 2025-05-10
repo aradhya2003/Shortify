@@ -34,9 +34,7 @@ export default function AnalyticsDashboard() {
       setError(null);
 
       // Replace with your actual API endpoint
-      const response = await fetch(
-        `http://localhost:8000/api/analytics/${urlCode}`
-      );
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/analytics/${urlCode}`);
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         if (response.status === 404) {
