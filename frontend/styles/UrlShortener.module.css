@@ -33,14 +33,17 @@
 }
 
 /* Main Card */
+
 .mainCard {
   background: white;
   border-radius: 1rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   padding: 2rem;
-  width: 150%;
+  width: 100%;
   max-width: 600px;
+  box-sizing: border-box;
 }
+
 
 /* Form Elements */
 .form {
