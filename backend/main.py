@@ -87,7 +87,7 @@ async def redirect_url(
         raise HTTPException(status_code=404, detail="URL not found")
     background_tasks.add_task(track_analytics, short_code, request)
 
-     return RedirectResponse(url=long_url)   
+    return RedirectResponse(url=long_url)   
     
     
 @app.get("/api/analytics/{short_code}")
