@@ -7,6 +7,7 @@ import redis
 from dotenv import load_dotenv
 import geoip2.database
 import traceback
+from fastapi.responses import RedirectResponse
 from user_agents.parsers import parse
 from datetime import datetime, timezone 
 from datetime import datetime
@@ -70,24 +71,29 @@ async def shorten_url(url_item: dict = Body(...)):
 @app.get("/{short_code}")
 async def redirect_url(
     short_code: str,
-    request: Request,  # Add this parameter
+    request: Request,
     background_tasks: BackgroundTasks
 ):
     """Redirect to original URL"""
+    # Get the long URL from cache or database
+    long_url = None
     if cached := redis_client.get(short_code):
-        return {"long_url": cached.decode()}
-
-    res = supabase.table("urls") \
-              .select("long_url") \
-              .eq("short_code", short_code) \
-              .execute()
-
-    if not res.data:
-        raise HTTPException(status_code=404, detail="URL not found")
-    background_tasks.add_task(track_analytics, short_code, request)
-
-    return {"long_url": res.data[0]["long_url"]}    
+        long_url = cached.decode()
+    else:
+        res = supabase.table("urls") \
+                  .select("long_url") \
+                  .eq("short_code", short_code) \
+                  .execute()
+        if not res.data:
+            raise HTTPException(status_code=404, detail="URL not found")
+        long_url = res.data[0]["long_url"]
     
+    # Track analytics in background
+    background_tasks.add_task(track_analytics, short_code, request)
+    
+    # Perform the redirect
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url=long_url)    
     
 @app.get("/api/analytics/{short_code}")
 async def get_analytics(short_code: str):
