@@ -11,6 +11,7 @@ from user_agents.parsers import parse
 from datetime import datetime, timezone 
 from datetime import datetime
 from pathlib import Path
+from fastapi.responses import RedirectResponse
 geoip_path = Path("data") / "GeoLite2-City_20250502" / "GeoLite2-City.mmdb"
 geoip_reader = geoip2.database.Reader(str(geoip_path))
 from pathlib import Path
@@ -86,7 +87,7 @@ async def redirect_url(
         raise HTTPException(status_code=404, detail="URL not found")
     background_tasks.add_task(track_analytics, short_code, request)
 
-    return {"long_url": res.data[0]["long_url"]}    
+     return RedirectResponse(url=long_url)   
     
     
 @app.get("/api/analytics/{short_code}")
