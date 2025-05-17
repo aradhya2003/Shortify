@@ -91,7 +91,7 @@ export default function AnalyticsDashboard() {
   return (
     <div className={styles.dashboard}>
       <div className={styles.dashboardHeader}>
-        <h1>URL Analytics Dashboard</h1>
+        <h1>Analytics Dashboard</h1>
         <form onSubmit={handleSubmit} className={styles.searchForm}>
           <input
             type="text"
