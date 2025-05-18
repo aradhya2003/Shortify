@@ -4,6 +4,15 @@
 
 ---
 
+## 🌐 Live Demo
+
+Try it out here:  
+👉 [https://shortify-navy.vercel.app](https://shortify-navy.vercel.app)
+
+---
+
+
+
 ## 🚀 Features
 
 - **URL Shortening**: Instantly shorten long URLs into compact, shareable links.
