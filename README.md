@@ -1,55 +1,71 @@
 # Shortify | Enterprise URL Shortener
 
-Shortify is an enterprise-grade URL shortener designed to provide high-performance link management. It allows users to shorten URLs, generate custom aliases, and track the performance of shortened links with built-in analytics. The application uses a responsive UI, QR code generation, and an easy-to-use dashboard for quick link management.
+**Shortify** is an enterprise-grade URL shortener built for performance, scalability, and insights. It empowers users to shorten links, generate custom aliases and QR codes, and track detailed user analytics—including a real-time heatmap based on geographic activity.
 
 ---
 
-## Features
-- **URL Shortening**: Shorten any long URL into a compact version.
-- **Custom Alias**: Optionally create custom aliases for your URLs.
-- **QR Code Generation**: Generate QR codes for your shortened links.
-- **Clipboard Support**: Easy copy-to-clipboard functionality for shortened URLs.
-- **Analytics Preview**: Display a preview of analytics (clicks, unique visitors, and countries).
-- **Enterprise-Grade**: Designed for business use with future-proof scalability.
+## 🚀 Features
 
-## Tech Stack
-- **Frontend**: Next.js (React-based)
-- **Backend**: API routes in Next.js (for URL shortening and analytics)
-- **Database**: Supabase for storing URLs and analytics data
-- **Caching**: Redis for fast data retrieval
-- **QR Code Generation**: qrcode.react
-- **Deployment**: Vercel for deployment
+- **URL Shortening**: Instantly shorten long URLs into compact, shareable links.
+- **Custom Alias**: Optionally assign a custom alias to personalize your short URL.
+- **QR Code Generation**: Automatically generate downloadable QR codes for any shortened link.
+- **Clipboard Support**: One-click copy for easy sharing.
+- **Analytics Dashboard**:
+  - Total Clicks
+  - Unique Visitors
+  - Top Countries
+  - Referrer Tracking
+  - Device Type, Browser, OS
+  - ASN, ISP, Organization
+  - **Geolocation Heatmap (Lat/Lng based)**
+- **Enterprise-Grade Design**: Scalable, secure, and responsive—ideal for production use cases.
 
-## Installation
+---
+
+## 🧱 Tech Stack
+
+- **Frontend**: [Next.js](https://nextjs.org/) (React)
+- **Backend**: Next.js API Routes + FastAPI for redirection analytics
+- **Database**: [Supabase](https://supabase.io/)
+- **Caching**: Redis (for URL lookup and performance)
+- **QR Code Generation**: `qrcode.react`
+- **Deployment**: [Vercel](https://vercel.com/)
+
+---
+
+## 🔧 Installation
 
 ### Prerequisites
 
-Before you begin, ensure you have the following installed on your machine:
+Make sure the following tools are installed:
 
 - Node.js (v14 or later)
-- npm or yarn (npm recommended)
+- npm (or yarn)
+- Supabase account & Redis database
 
-### Steps to Install Locally
+### Local Setup
 
-1. Clone the repository:
+1. **Clone the repository**:
 
     ```bash
     git clone https://github.com/aradhya2003/Shortify.git
     ```
 
-2. Navigate to the `frontend` directory:
+2. **Navigate to the frontend directory**:
 
     ```bash
     cd Shortify/frontend
     ```
 
-3. Install the dependencies:
+3. **Install dependencies**:
 
     ```bash
     npm install
     ```
 
-4. Set up environment variables. Create a `.env.local` file and add the following:
+4. **Configure environment variables**:
+
+    Create a `.env.local` file:
 
     ```env
     NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
@@ -58,59 +74,93 @@ Before you begin, ensure you have the following installed on your machine:
     REDIS_URL=<your-redis-url>
     ```
 
-    Replace the `<your-supabase-url>`, `<your-supabase-api-key>`, and `<your-redis-url>` with your actual credentials.
+    Replace the placeholders with your actual credentials.
 
-5. Run the app locally:
+5. **Start the development server**:
 
     ```bash
     npm run dev
     ```
 
-6. Visit `http://localhost:3000` to see the application in action.
-
-## Usage
-
-1. **Enter a URL**: Paste a long URL into the input box.
-2. **Custom Alias (Optional)**: Add a custom alias for your shortened link (optional).
-3. **Shorten**: Click the "Shorten URL" button to get your shortened URL.
-4. **Copy to Clipboard**: Use the copy button next to the shortened URL to copy it.
-5. **Download QR Code**: Download the QR code associated with the shortened URL.
-6. **View Analytics**: View the preview of total clicks, unique visitors, and countries for the shortened link.
-
-## Analytics
-
-The project also includes basic **click tracking** functionality (like total clicks, unique visitors, and countries). This data is stored in **Supabase** and can be accessed for detailed analytics on your URLs.
+6. Visit [http://localhost:3000](http://localhost:3000) to launch the application.
 
 ---
 
-## Contributing
+## 🧑‍💻 Usage
 
-If you'd like to contribute to this project, feel free to fork the repository, make changes, and submit a pull request.
+1. **Paste a long URL** into the input box.
+2. *(Optional)* **Set a custom alias** if desired.
+3. Click **Shorten URL** to generate a new link.
+4. Use the **copy** button to copy the shortened URL.
+5. Click **Download QR** to get the QR code.
+6. Access the **Analytics Dashboard** to see:
+   - Click statistics
+   - Referrers
+   - Device, OS, browser stats
+   - **Geolocation Heatmap** showing user activity on a map
+
+---
+
+## 📊 Analytics
+
+Shortify tracks detailed link activity, including:
+
+- **Total Clicks & Unique Visitors**
+- **Country and City-level Traffic**
+- **Browser & OS Versions**
+- **Device Type (Desktop, Mobile, Tablet)**
+- **IP, ASN, ISP, Organization**
+- **Timezone and Postal Code**
+- **Referring Source**
+- **🗺 Heatmap**: Based on latitude and longitude data, a live heatmap shows the density of user traffic geographically.
+
+All analytics data is stored securely in Supabase and captured during redirection via the backend API.
+
+---
+
+## 🤝 Contributing
+
+We welcome all contributions!
 
 ### Steps:
 1. Fork the repo
 2. Clone your fork:
+
     ```bash
     git clone <your-fork-url>
     ```
-3. Create a new branch:
+
+3. Create a feature branch:
+
     ```bash
     git checkout -b feature/your-feature-name
     ```
-4. Make changes, commit, and push to your branch
-5. Submit a pull request
+
+4. Make changes and push:
+
+    ```bash
+    git commit -am "Your commit message"
+    git push origin feature/your-feature-name
+    ```
+
+5. Open a Pull Request
 
 ---
 
-## License
+## 📄 License
 
-This project is open-source and available under the MIT License.
+MIT License — feel free to use, modify, and distribute!
 
 ---
 
-## Acknowledgements
+## 🙏 Acknowledgements
 
-- **Next.js**: For building the frontend and API routes.
-- **Supabase**: For handling the database and authentication.
-- **Redis**: For caching data to improve performance.
-- **QRCode.react**: For easy generation of QR codes.
+- **Next.js** — for powerful frontend and API routing
+- **Supabase** — for real-time database and authentication
+- **Redis** — for fast and scalable caching
+- **QRCode.react** — for generating QR codes
+- **Leaflet.js / Mapbox (optional)** — for heatmap rendering (if used)
+
+---
+
+> 🔥 Built with a focus on performance, privacy, and professional-grade analytics. Ideal for developers, marketers, and enterprises alike.
