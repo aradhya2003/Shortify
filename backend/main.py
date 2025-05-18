@@ -8,7 +8,8 @@ from dotenv import load_dotenv
 import traceback
 from fastapi.responses import RedirectResponse
 from user_agents.parsers import parse
-from datetime import datetime, timezone
+from datetime import datetime
+import datetime as dt_module
 from pathlib import Path
 import ipinfo
 
@@ -189,7 +190,7 @@ async def track_analytics(short_code: str, request: Request):
         # Final insert
         supabase.table("clicks").insert({
             "short_code": short_code,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(dt_module.timezone.utc).isoformat(),
             "ip_address": client_ip,
             "referrer": referer,
             "browser_name": browser_name,
