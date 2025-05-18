@@ -1,6 +1,6 @@
-# LinkifyPro | Enterprise URL Shortener
+# Shortify | Enterprise URL Shortener
 
-LinkifyPro is an enterprise-grade URL shortener designed to provide high-performance link management. It allows users to shorten URLs, generate custom aliases, and track the performance of shortened links with built-in analytics. The application uses a responsive UI, QR code generation, and an easy-to-use dashboard for quick link management.
+Shortify is an enterprise-grade URL shortener designed to provide high-performance link management. It allows users to shorten URLs, generate custom aliases, and track the performance of shortened links with built-in analytics. The application uses a responsive UI, QR code generation, and an easy-to-use dashboard for quick link management.
 
 ---
 
