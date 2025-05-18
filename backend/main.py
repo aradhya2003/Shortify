@@ -5,17 +5,19 @@ from supabase import create_client
 import secrets
 import redis
 from dotenv import load_dotenv
-import geoip2.database
 import traceback
 from fastapi.responses import RedirectResponse
 from user_agents.parsers import parse
 from datetime import datetime, timezone 
 from datetime import datetime
 from pathlib import Path
-geoip_path = Path("data") / "GeoLite2-City_20250502" / "GeoLite2-City.mmdb"
-geoip_reader = geoip2.database.Reader(str(geoip_path))
-from pathlib import Path
+import ipinfo
+
 load_dotenv()
+IPINFO_ACCESS_TOKEN = os.getenv("IPINFO_TOKEN", "")
+ipinfo_handler = ipinfo.getHandler(IPINFO_ACCESS_TOKEN)
+
+
 
 app = FastAPI()
 
@@ -98,6 +100,7 @@ async def redirect_url(
 @app.get("/api/analytics/{short_code}")
 async def get_analytics(short_code: str):
     """Fetch analytics summary via Supabase stored procedure"""
+    short_code = short_code.strip()
     try:
         # First verify the short code exists
         url_res = supabase.table("urls") \
@@ -136,46 +139,81 @@ async def get_analytics(short_code: str):
             status_code=500,
             detail=f"Failed to fetch analytics: {str(e)}"
         )
+
 async def track_analytics(short_code: str, request: Request):
-    """Background analytics tracking"""
     try:
-        client_host = request.client.host
+        client_ip = request.headers.get('X-Forwarded-For')
+        if client_ip:
+            client_ip = client_ip.split(",")[0].strip()
+        else:
+            client_ip = request.client.host
+
         user_agent_str = request.headers.get("user-agent", "")
         referer = request.headers.get("referer", "")
-        
-        # Parse user agent
-        user_agent = parse(user_agent_str)
+
+        ua = parse(user_agent_str)
+
+        try:
+            details = ipinfo_handler.getDetails(client_ip)
+        except Exception as e:
+            print("IPinfo lookup failed:", e)
+            details = None
+
+        # Extract geo/network data safely
+        city = getattr(details, 'city', None)
+        country = getattr(details, 'country_name', None)
+        postal = getattr(details, 'postal', None)
+        timezone = getattr(details, 'timezone', None)
+        coordinates = getattr(details, 'loc', None)  # "lat,long"
+        isp = getattr(details, 'org', None)
+        asn = getattr(details, 'asn', {}).get('asn', None)
+        organization = getattr(details, 'asn', {}).get('name', None)
+
+        latitude, longitude = None, None
+        if coordinates and "," in coordinates:
+            lat_str, long_str = coordinates.split(",", 1)
+            latitude = float(lat_str.strip())
+            longitude = float(long_str.strip())
+
+        # Parse device/browser/OS info
+        browser_name = ua.browser.family
+        browser_version = ua.browser.version_string
+        os_name = ua.os.family
+        os_version = ua.os.version_string
         device_type = (
-            "mobile" if user_agent.is_mobile else
-            "desktop" if user_agent.is_pc else
-            "tablet" if user_agent.is_tablet else 
-            "other"
+            "Mobile" if ua.is_mobile else
+            "Tablet" if ua.is_tablet else
+            "Desktop" if ua.is_pc else
+            "Other"
         )
 
-        # Get location data
-        country = city = None
-        try:
-            if client_host and client_host not in ["127.0.0.1", "::1", "localhost"]:
-                geo_data = geoip_reader.city(client_host)
-                country = geo_data.country.name if geo_data.country.name else None
-                city = geo_data.city.name if geo_data.city.name else None
-        except Exception as geo_error:
-            print(f"GeoIP lookup failed: {geo_error}")
-
-        # Insert analytics
+        # Final insert
         supabase.table("clicks").insert({
             "short_code": short_code,
-            "ip_address": client_host,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "ip_address": client_ip,
+            "referrer": referer,
+            "browser_name": browser_name,
+            "browser_version": browser_version,
+            "os_name": os_name,
+            "os_version": os_version,
+            "device_type": device_type,
             "country": country,
             "city": city,
-            "device_type": device_type,
-            "referrer": referer,
-            "timestamp": datetime.now(timezone.utc).isoformat()
+            "latitude": latitude,
+            "longitude": longitude,
+            "postal_code": postal,
+            "timezone": timezone,
+            "isp": isp,
+            "asn": asn,
+            "organization": organization
         }).execute()
 
     except Exception as e:
-        print("Analytics tracking failed (non-critical):", repr(e))
+        print("Analytics tracking failed:", repr(e))
         traceback.print_exc()
+
+
 @app.get("/")
 async def health_check():
     return {"status": "OK"}

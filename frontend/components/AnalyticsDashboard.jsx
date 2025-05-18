@@ -6,6 +6,7 @@ const Heatmap = dynamic(() => import("./Heatmap"), {
   ssr: false,
   loading: () => <div className={styles.mapLoading}>Loading heatmap...</div>,
 });
+
 const countryCodeMap = {
   India: "in",
   Brazil: "br",
@@ -33,8 +34,9 @@ export default function AnalyticsDashboard() {
       setLoading(true);
       setError(null);
 
-      // Replace with your actual API endpoint
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/analytics/${urlCode}`);
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/analytics/${urlCode}`
+      );
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         if (response.status === 404) {
@@ -44,27 +46,19 @@ export default function AnalyticsDashboard() {
         }
         return;
       }
-      
+
       const data = await response.json();
 
-      // Process data to ensure consistent structure
-      const processedData = {
-        ...data,
-        // Ensure locations have count property
-        locations:
-          data.locations?.map((loc) => ({
-            ...loc,
-            count: loc.count || 1,
-          })) || [],
-        // Clean referrer domains
-        referrers:
-          data.referrers?.map((ref) => ({
-            ...ref,
-            domain: ref.domain.replace(/^https?:\/\//, ""),
-          })) || [],
-      };
+      // Clean referrers domains and ensure count exists
+      const cleanedReferrers = (data.by_referrer || []).map((ref) => ({
+        domain: ref.referrer ? ref.referrer.replace(/^https?:\/\//, "") : "Direct",
+        count: ref.count || 1,
+      }));
 
-      setAnalytics(processedData);
+      setAnalytics({
+        ...data,
+        referrers: cleanedReferrers,
+      });
     } catch (err) {
       console.error("Failed to fetch analytics:", err);
       setError(err.message || "Failed to load analytics");
@@ -78,7 +72,6 @@ export default function AnalyticsDashboard() {
     fetchAnalytics();
   };
 
-  // Format date consistently
   const formatDate = (timestamp) => {
     if (!timestamp) return "Unknown";
     try {
@@ -148,14 +141,206 @@ export default function AnalyticsDashboard() {
             </div>
             <div className={styles.summaryCard}>
               <h3>Top Country</h3>
-              <p>{analytics.top_country || "N/A"}</p>
+              <p>{analytics.by_country?.[0]?.country || "N/A"}</p>
             </div>
           </div>
 
           {/* Map Visualization */}
           <div className={styles.mapContainer}>
             <h2 className={styles.sectionTitle}>Visitor Locations</h2>
-            <Heatmap locations={analytics.locations} />
+            <Heatmap locations={analytics.by_city || []} />
+          </div>
+
+          {/* Device Types */}
+          <div className={styles.analyticsTableContainer}>
+            <h2 className={styles.sectionTitle}>Device Types</h2>
+            <table className={styles.analyticsTable}>
+              <thead>
+                <tr>
+                  <th>Device Type</th>
+                  <th>Count</th>
+                </tr>
+              </thead>
+              <tbody>
+                {analytics.by_device_type?.map((d, i) => (
+                  <tr key={i}>
+                    <td>{d.device_type}</td>
+                    <td>{d.count.toLocaleString()}</td>
+                  </tr>
+                )) || (
+                  <tr><td colSpan={2}>No data</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* OS */}
+          <div className={styles.analyticsTableContainer}>
+            <h2 className={styles.sectionTitle}>Operating Systems</h2>
+            <table className={styles.analyticsTable}>
+              <thead>
+                <tr>
+                  <th>OS Name</th>
+                  <th>Version</th>
+                  <th>Count</th>
+                </tr>
+              </thead>
+              <tbody>
+                {analytics.by_os?.map((os, i) => (
+                  <tr key={i}>
+                    <td>{os.os_name}</td>
+                    <td>{os.os_version}</td>
+                    <td>{os.count.toLocaleString()}</td>
+                  </tr>
+                )) || (
+                  <tr><td colSpan={3}>No data</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Browsers */}
+          <div className={styles.analyticsTableContainer}>
+            <h2 className={styles.sectionTitle}>Browsers</h2>
+            <table className={styles.analyticsTable}>
+              <thead>
+                <tr>
+                  <th>Browser</th>
+                  <th>Version</th>
+                  <th>Count</th>
+                </tr>
+              </thead>
+              <tbody>
+                {analytics.by_browser?.map((b, i) => (
+                  <tr key={i}>
+                    <td>{b.browser_name}</td>
+                    <td>{b.browser_version}</td>
+                    <td>{b.count.toLocaleString()}</td>
+                  </tr>
+                )) || (
+                  <tr><td colSpan={3}>No data</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* ASN */}
+          <div className={styles.analyticsTableContainer}>
+            <h2 className={styles.sectionTitle}>ASN</h2>
+            <table className={styles.analyticsTable}>
+              <thead>
+                <tr>
+                  <th>ASN</th>
+                  <th>Count</th>
+                </tr>
+              </thead>
+              <tbody>
+                {analytics.by_asn?.map((asn, i) => (
+                  <tr key={i}>
+                    <td>{asn.asn}</td>
+                    <td>{asn.count.toLocaleString()}</td>
+                  </tr>
+                )) || (
+                  <tr><td colSpan={2}>No data</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* ISP */}
+          <div className={styles.analyticsTableContainer}>
+            <h2 className={styles.sectionTitle}>Internet Service Providers (ISP)</h2>
+            <table className={styles.analyticsTable}>
+              <thead>
+                <tr>
+                  <th>ISP</th>
+                  <th>Count</th>
+                </tr>
+              </thead>
+              <tbody>
+                {analytics.by_isp?.map((isp, i) => (
+                  <tr key={i}>
+                    <td>{isp.isp}</td>
+                    <td>{isp.count.toLocaleString()}</td>
+                  </tr>
+                )) || (
+                  <tr><td colSpan={2}>No data</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Organizations */}
+          <div className={styles.analyticsTableContainer}>
+            <h2 className={styles.sectionTitle}>Organizations</h2>
+            <table className={styles.analyticsTable}>
+              <thead>
+                <tr>
+                  <th>Organization</th>
+                  <th>Count</th>
+                </tr>
+              </thead>
+              <tbody>
+                {analytics.by_organization?.map((org, i) => (
+                  <tr key={i}>
+                    <td>{org.organization}</td>
+                    <td>{org.count.toLocaleString()}</td>
+                  </tr>
+                )) || (
+                  <tr><td colSpan={2}>No data</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Timezones */}
+          <div className={styles.analyticsTableContainer}>
+            <h2 className={styles.sectionTitle}>Timezones</h2>
+            <table className={styles.analyticsTable}>
+              <thead>
+                <tr>
+                  <th>Timezone</th>
+                  <th>Count</th>
+                </tr>
+              </thead>
+              <tbody>
+                {analytics.by_timezone?.map((tz, i) => (
+                  <tr key={i}>
+                    <td>{tz.timezone}</td>
+                    <td>{tz.count.toLocaleString()}</td>
+                  </tr>
+                )) || (
+                  <tr><td colSpan={2}>No data</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Postal Codes */}
+          <div className={styles.analyticsTableContainer}>
+            <h2 className={styles.sectionTitle}>Postal Codes</h2>
+            <table className={styles.analyticsTable}>
+              <thead>
+                <tr>
+                  <th>Postal Code</th>
+                  <th>Count</th>
+                  <th>Latitude</th>
+                  <th>Longitude</th>
+                </tr>
+              </thead>
+              <tbody>
+                {analytics.by_postal_code?.map((pc, i) => (
+                  <tr key={i}>
+                    <td>{pc.postal_code}</td>
+                    <td>{pc.count.toLocaleString()}</td>
+                    <td>{pc.latitude}</td>
+                    <td>{pc.longitude}</td>
+                  </tr>
+                )) || (
+                  <tr><td colSpan={4}>No data</td></tr>
+                )}
+              </tbody>
+            </table>
           </div>
 
           {/* Referrers Table */}
@@ -172,20 +357,28 @@ export default function AnalyticsDashboard() {
                 {analytics.referrers?.map((ref, i) => (
                   <tr key={i} className={styles.analyticsTableRow}>
                     <td className={styles.analyticsTableCell}>
-                      <a
-                        href={`https://${ref.domain}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={styles.link}
-                      >
-                        {ref.domain}
-                      </a>
+                      {ref.domain === "Direct" ? (
+                        "Direct / None"
+                      ) : (
+                        <a
+                          href={`https://${ref.domain}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={styles.link}
+                        >
+                          {ref.domain}
+                        </a>
+                      )}
                     </td>
                     <td className={styles.analyticsTableCell}>
                       {ref.count?.toLocaleString() || "0"}
                     </td>
                   </tr>
-                ))}
+                )) || (
+                  <tr>
+                    <td colSpan={2}>No referrer data</td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -198,11 +391,11 @@ export default function AnalyticsDashboard() {
                 <tr>
                   <th className={styles.analyticsTableHeader}>Country</th>
                   <th className={styles.analyticsTableHeader}>City</th>
-                  {/* <th className={styles.analyticsTableHeader}>Time</th> */}
+                  <th className={styles.analyticsTableHeader}>Time</th>
                 </tr>
               </thead>
               <tbody>
-                {analytics.locations?.slice(0, 10).map((loc, i) => (
+                {analytics.recent_activity?.slice(0, 10).map((loc, i) => (
                   <tr key={i} className={styles.analyticsTableRow}>
                     <td className={styles.analyticsTableCell}>
                       {loc.country && (
@@ -221,11 +414,15 @@ export default function AnalyticsDashboard() {
                     <td className={styles.analyticsTableCell}>
                       {loc.city || "Unknown"}
                     </td>
-                    {/* <td className={styles.analyticsTableCell}>
+                    <td className={styles.analyticsTableCell}>
                       {formatDate(loc.timestamp)}
-                    </td> */}
+                    </td>
                   </tr>
-                ))}
+                )) || (
+                  <tr>
+                    <td colSpan={3}>No recent activity data</td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
