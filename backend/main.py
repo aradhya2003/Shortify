@@ -8,13 +8,12 @@ from dotenv import load_dotenv
 import traceback
 from fastapi.responses import RedirectResponse
 from user_agents.parsers import parse
-from datetime import datetime, timezone 
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 import ipinfo
 
 load_dotenv()
-IPINFO_ACCESS_TOKEN = os.getenv("IPINFO_TOKEN", "")
+IPINFO_ACCESS_TOKEN = os.getenv("IPINFO_TOKEN", "").strip()
 ipinfo_handler = ipinfo.getHandler(IPINFO_ACCESS_TOKEN)
 
 
